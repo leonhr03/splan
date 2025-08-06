@@ -1,64 +1,53 @@
-import React, { useState } from "react";
-import {SafeAreaView, Text, StyleSheet, FlatList, View, TouchableOpacity, TextInput} from "react-native";
-import { Picker } from "@react-native-picker/picker";
+import React, {useEffect, useState} from "react";
+import {SafeAreaView, Text, StyleSheet, FlatList, View, TouchableOpacity } from "react-native";
+import { useRouter} from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function ChooseScreen() {
-    const [subject, setSubject] = useState("")
-    const [rating, setRating] = useState("1")
-    const [scratch, setScratch] = useState([
-        { title: "Enter Your Subjects", note: "" },
-    ]);
+export default function Home() {
+    const [scratch, setScratch] = useState([]);
+    const router = useRouter()
 
-    const write = () => {
-        setScratch(prev => [...prev, { title: subject, note: rating }]);
-        setSubject("");
-        setRating("");
-    };
-
-    const deleteItem = (indexToDelete: number) => {
-        setScratch(prev => prev.filter((_, index) => index !== indexToDelete));
-    };
+    useEffect(() => {
+        const load = async () => {
+            const json = await AsyncStorage.getItem("subjectsArray");
+            if (json) {
+                const parsed = JSON.parse(json); // <-- das ist wichtig!
+                setScratch(parsed);
+            }
+        };
+        load();
+    },);
 
 
     // @ts-ignore
     const renderItem = ({ item, index }) => {
         return (
             <View style={styles.item}>
-                <Text style={styles.text}>{item.title}</Text>
-                <Text style={styles.text}>{item.note}</Text>
-                <TouchableOpacity onPress={() => deleteItem(index)}>
-                    <Text style={[styles.text, { color: 'red', marginLeft: 10 }]}>X</Text>
+                <View style={styles.itemLeft}>
+                    <Text style={styles.text}>{item.title}</Text>
+                </View>
+                <TouchableOpacity style={styles.itemRight} onPress={() => router.replace(`/student/grade?subject=${encodeURIComponent(item.title)}`)}
+                    >
+                    <Text style={styles.buText}>{"->"}</Text>
                 </TouchableOpacity>
             </View>
         );
     };
 
 
+    // @ts-ignore
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.heading}>Splan</Text>
-            <Text style={styles.note}>Note</Text>
             <FlatList
                 data={scratch}
                 renderItem={renderItem}
                 keyExtractor={(item, index) => index.toString()}
             />
-            <TextInput  style={styles.input} value={subject} onChangeText={setSubject} placeholder={"subject"}/>
-            <Picker
-                selectedValue={rating}
-                onValueChange={(itemValue) => setRating(itemValue)}
-                style={styles.picker}
-            >
-                <Picker.Item label="1" value="1" />
-                <Picker.Item label="2" value="2" />
-                <Picker.Item label="3" value="3" />
-                <Picker.Item label="4" value="4" />
-                <Picker.Item label="5" value="5" />
-                <Picker.Item label="6" value="6" />
-            </Picker>
-            <TouchableOpacity style={styles.button} onPress={write}>
+            <TouchableOpacity style={styles.button} onPress={() => router.replace("/student/newSubject")}>
                 <Text style={styles.buText}>Add</Text>
             </TouchableOpacity>
+
         </SafeAreaView>
     );
 }
@@ -84,12 +73,35 @@ const styles = StyleSheet.create({
     },
     item: {
         flexDirection: "row",
-        justifyContent: "center",
+        alignItems: "center",
+        justifyContent: "space-between",
         width: "100%",
-        padding: 12,
+        paddingHorizontal: 16,
         marginVertical: 10,
-        backgroundColor: "#006400",
     },
+
+    itemLeft: {
+        flex: 1,
+        backgroundColor: "#006400",
+        borderTopLeftRadius: 20,
+        borderBottomLeftRadius: 20,
+        borderTopRightRadius: 20,
+        borderBottomRightRadius: 20,
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+    },
+
+    itemRight: {
+        marginLeft: 10,
+        backgroundColor: "#006400",
+        width: 40,
+        height: 40,
+        borderRadius: 10,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+
     button: {
         padding: 10,
         backgroundColor: "#006400",
@@ -112,6 +124,12 @@ const styles = StyleSheet.create({
         color: "#000",
     },
 
+    linkText: {
+        fontSize: 20,
+        color: "#006400",
+        marginBottom: 30,
+    },
+
     input: {
         padding: 10,
         paddingHorizontal: 60,
@@ -120,15 +138,5 @@ const styles = StyleSheet.create({
         marginTop: 20,
         marginHorizontal: 10,
         marginBottom: 10,
-    },
-
-    picker: {
-        width: "100%",
-        color: "#fff",
-        backgroundColor: "#006400",
-        marginVertical: 10,
-        marginRight: 800,
-        marginLeft: 800,
-        padding: 5,
     },
 });

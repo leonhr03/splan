@@ -1,19 +1,21 @@
-import { Link } from "expo-router"
+import {Link, useRouter} from "expo-router"
 import React from "react"
 import {SafeAreaView, Text, StyleSheet, View, TouchableOpacity } from "react-native"
 
 export default function ChooseScreen(){
+
+    const router = useRouter()
 
     return(
         <SafeAreaView style={styles.container}>
             <Text style={styles.heading}>Splan</Text>
             <Text style={styles.text}>Choose your role</Text>
             <View style={styles.chooseRow}>
-                <TouchableOpacity style={styles.button}>
-                    <Link href={"/student/home"} style={styles.buText}>Student</Link>
+                <TouchableOpacity style={styles.button} onPress={() => router.replace("/student/home")}>
+                    <Text style={styles.buText}>Student</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.button}>
-                    <Link href={"/teacher/home"} style={styles.buText}>Teacher</Link>
+                <TouchableOpacity style={styles.button} onPress={() => router.replace("/teacher/home")}>
+                    <Text style={styles.buText}>Teacher</Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
