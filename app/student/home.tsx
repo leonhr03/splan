@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from "react";
 import {SafeAreaView, Text, StyleSheet, FlatList, View, TouchableOpacity } from "react-native";
-import { useRouter} from "expo-router";
+import {useLocalSearchParams, useRouter} from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from 'react-native';
 
 export default function Home() {
     const [scratch, setScratch] = useState([]);
@@ -19,18 +20,52 @@ export default function Home() {
     },);
 
 
+
+    const deleteItem = async (index: number) => {
+        Alert.alert(
+            "Delete Subject",
+            "Do you really want to delete this subject",
+            [
+                {
+                    text: "cancel",
+                    style: "cancel",
+                },
+                {
+                    text: "delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        const list = await AsyncStorage.getItem("subjectsArray");
+
+                        if (list) {
+                            const listParsed = JSON.parse(list);
+                            listParsed.splice(index, 1);
+                            await AsyncStorage.setItem("subjectsArray", JSON.stringify(listParsed));
+                            setScratch(listParsed);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+
+
     // @ts-ignore
     const renderItem = ({ item, index }) => {
+
         return (
-            <View style={styles.item}>
-                <View style={styles.itemLeft}>
-                    <Text style={styles.text}>{item.title}</Text>
-                </View>
-                <TouchableOpacity style={styles.itemRight} onPress={() => router.replace(`/student/grade?subject=${encodeURIComponent(item.title)}`)}
+            <TouchableOpacity onLongPress={() => deleteItem(index)} onPress={() => router.replace(`/student/grade?subject=${encodeURIComponent(item.title)}`)}>
+                <View style={styles.item}>
+                    <View style={styles.itemLeft}>
+                        <Text style={styles.text}>{item.title}</Text>
+                    </View>
+                    <View style={styles.itemRight}
                     >
-                    <Text style={styles.buText}>{"->"}</Text>
-                </TouchableOpacity>
-            </View>
+                        <Text style={styles.buText}>{"->"}</Text>
+                    </View>
+                </View>
+            </TouchableOpacity>
+
         );
     };
 

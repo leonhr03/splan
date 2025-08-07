@@ -10,15 +10,19 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.leonhuber.splan"
+      "bundleIdentifier": "com.leonhuber.splan",
+      "runtimeVersion": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#006400"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.leonhuber.splan"
+      "package": "com.leonhuber.splan",
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "web": {
       "bundler": "metro",
@@ -33,7 +37,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#000"
+          "backgroundColor": "#006400"
         }
       ]
     ],
@@ -45,6 +49,9 @@
       "eas": {
         "projectId": "92162bfe-4736-4021-889d-61eaa2774b7f"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/92162bfe-4736-4021-889d-61eaa2774b7f"
     }
   }
 }

@@ -31,6 +31,7 @@ export default function AddSubject() {
         setScratch(newList);
         await save(newList);
         setInput("");
+        router.replace("/student/home")
     };
 
     return (
@@ -44,9 +45,6 @@ export default function AddSubject() {
             />
             <TouchableOpacity style={styles.button} onPress={addItem}>
                 <Text style={styles.buText}>Add</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => router.replace("/student/home")}>
-                <Text style={styles.buText}>back</Text>
             </TouchableOpacity>
         </SafeAreaView>
     );

@@ -1,81 +1,146 @@
 import React, { useEffect, useState } from "react";
-import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+    Alert,
+    FlatList,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Exam = {
     title: string;
-    grade: number;
+    grade: number | string;
     subject: string;
 };
 
 export default function Grade() {
     const { subject } = useLocalSearchParams();
     const [exams, setExams] = useState<Exam[]>([]);
+    const [average, setAverage] = useState<number | null>(null);
     const router = useRouter();
 
     useEffect(() => {
-        const load = async () => {
-            const json = await AsyncStorage.getItem("examsArray");
+        const loadData = async () => {
+            const json = await AsyncStorage.getItem(`examsArray${subject}`);
             if (json) {
                 const parsed: Exam[] = JSON.parse(json);
                 setExams(parsed);
+                calculateAverage(parsed);
+            } else {
+                setExams([]);
+                setAverage(null);
             }
         };
-        load();
-    }, []);
 
-    const filteredExams = exams.filter((exam) => exam.subject === subject);
+        loadData();
+    }, [subject]);
 
-    const calculateAverage = () => {
-        const validGrades = filteredExams
-            .filter((exam) => exam.grade !== undefined && !isNaN(Number(exam.grade)))
-            .map((exam) => Number(exam.grade));
 
-        if (validGrades.length === 0) return null;
+    const calculateAverage = async (examList: Exam[]) => {
+        const grades = examList
+            .map((exam) => Number(exam.grade))
+            .filter((grade) => !isNaN(grade));
 
-        const sum = validGrades.reduce((acc, grade) => acc + grade, 0);
-        return (sum / validGrades.length).toFixed(2);
+        if (grades.length > 0) {
+            const sum = grades.reduce((acc, curr) => acc + curr, 0);
+            const avg = sum / grades.length;
+            setAverage(avg);
+
+        } else {
+            setAverage(null);
+        }
     };
 
-    const renderItem = ({ item, index }: { item: Exam; index: number }) => {
+    const deleteItem = async (index: number) => {
+        Alert.alert(
+            "Delete Exam",
+            "Do your really want to delete this Exam",
+            [
+                {
+                    text: "cancel",
+                    style: "cancel",
+                },
+                {
+                    text: "delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        const list = await AsyncStorage.getItem(`examsArray${subject}`);
+                        if (list) {
+                            const listParsed: Exam[] = JSON.parse(list);
+                            listParsed.splice(index, 1);
+                            await AsyncStorage.setItem(`examsArray${subject}`, JSON.stringify(listParsed));
+                            setExams(listParsed);
+                            calculateAverage(listParsed); // 👉 Durchschnitt neu berechnen
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+
+
+    // @ts-ignore
+    const renderItem = ({ item, index }: { item: Exam }) => {
         return (
-            <View style={styles.item}>
+            <TouchableOpacity style={styles.item} onLongPress={() => deleteItem(index)} onPress={() => router.replace(`/student/newGrade?subject=${encodeURIComponent(item.title)}`)}>
                 <View style={styles.itemLeft}>
                     <Text style={styles.text}>{item.title}</Text>
                 </View>
                 <TouchableOpacity
                     style={styles.itemRight}
-                    onPress={() => router.replace(`/student/grade?subject=${encodeURIComponent(item.title)}`)}
+                    onPress={() =>
+                        router.replace(
+                            `/student/grade?subject=${encodeURIComponent(item.title)}`
+                        )
+                    }
                 >
                     <Text style={styles.buText}>{item.grade}</Text>
                 </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
         );
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.heading}>{subject}</Text>
-            <Text style={styles.average}>{calculateAverage() ?? "N/A"}</Text>
-            <FlatList data={exams} renderItem={renderItem} keyExtractor={(item, index) => index.toString()} />
+
+            {average !== null ? (
+                <Text style={styles.heading}>Ø {average.toFixed(2)}</Text>
+            ) : (
+                <Text style={styles.heading}>Keine Noten</Text>
+            )}
+
+            <FlatList
+                data={exams}
+                renderItem={renderItem}
+                keyExtractor={(item, index) => index.toString()}
+            />
+
             <TouchableOpacity
                 style={styles.button}
-                onPress={() => router.replace(`/student/newGrade?subject=${encodeURIComponent(subject as string)}`)}
+                onPress={() =>
+                    router.replace(
+                        `/student/newGrade?subject=${encodeURIComponent(subject as string)}`
+                    )
+                }
             >
                 <Text style={styles.buText}>Add</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
                 style={styles.button}
                 onPress={() => router.replace(`/student/home`)}
             >
-                <Text style={styles.buText}>back</Text>
+                <Text style={styles.buText}>Back</Text>
             </TouchableOpacity>
-
         </SafeAreaView>
     );
 }
-
 
 const styles = StyleSheet.create({
     container: {
@@ -85,14 +150,12 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         padding: 16,
     },
-
     heading: {
         fontSize: 30,
         color: "#fff",
         marginTop: 20,
         marginBottom: 10,
     },
-
     button: {
         padding: 10,
         backgroundColor: "#006400",
@@ -101,12 +164,10 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
         marginBottom: 30,
     },
-
     buText: {
         fontSize: 20,
         color: "#000",
     },
-
     item: {
         flexDirection: "row",
         alignItems: "center",
@@ -115,7 +176,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         marginVertical: 10,
     },
-
     itemLeft: {
         flex: 1,
         backgroundColor: "#006400",
@@ -126,7 +186,6 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         paddingHorizontal: 20,
     },
-
     itemRight: {
         marginLeft: 10,
         backgroundColor: "#006400",
@@ -136,17 +195,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-
     text: {
         fontSize: 20,
         marginHorizontal: 10,
         color: "#fff",
     },
-
-    average: {
-        padding: 10,
-        backgroundColor: "#006400",
-        borderRadius: 15,
-        marginBottom: 20,
-    },
-})
+});

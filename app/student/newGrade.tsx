@@ -1,17 +1,18 @@
 import React, {useState} from "react"
 import {SafeAreaView, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
-import {useRouter} from "expo-router";
+import {useLocalSearchParams, useRouter} from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function NewGrade() {
 
+    const { subject } = useLocalSearchParams()
     const router = useRouter()
     const [exam, setExam] = useState("")
     const [grade, setGrade] = useState("")
     const [examList, setExamList] = useState([])
 
     const save = async (array: any) => {
-        await AsyncStorage.setItem("examsArray", JSON.stringify(array));
+        await AsyncStorage.setItem(`examsArray${subject}`, JSON.stringify(array));
     };
 
     const addItem = async () => {
@@ -19,18 +20,21 @@ export default function NewGrade() {
         const trimmedGrade = grade.trim();
         if (!trimmedExam&&!trimmedGrade) return;
 
-        const currentData = await AsyncStorage.getItem("examsArray");
+        // @ts-ignore
+        const currentData = await AsyncStorage.getItem(`examsArray${subject}`);
         const currentList = currentData ? JSON.parse(currentData) : [];
 
-        const newList: any = [...currentList, { title: trimmedExam, grade: trimmedGrade }];
+        const newList: any = [...currentList, { title: trimmedExam, grade: Number(trimmedGrade) }];
         setExamList(newList);
         await save(newList);
         setExam("");
+        setGrade("")
+        router.replace(`/student/grade?subject=${encodeURIComponent(subject as string)}`)
     };
 
     return(
         <SafeAreaView style={styles.container}>
-            <Text style={styles.heading}>Splan</Text>
+            <Text style={styles.heading}>{subject}</Text>
             <TextInput
                 style={styles.input}
                 value={exam}
@@ -45,9 +49,6 @@ export default function NewGrade() {
             />
             <TouchableOpacity style={styles.button} onPress={addItem}>
                 <Text style={styles.buText}>Add</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => router.replace("/student/grade")}>
-                <Text style={styles.buText}>back</Text>
             </TouchableOpacity>
         </SafeAreaView>
     )
