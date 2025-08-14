@@ -1,26 +1,67 @@
-import {Link, useRouter} from "expo-router"
-import React from "react"
-import {SafeAreaView, Text, StyleSheet, View, TouchableOpacity } from "react-native"
+import React, { useEffect, useState } from "react";
+import {
+    SafeAreaView,
+    Text,
+    StyleSheet,
+    View,
+    TouchableOpacity,
+    ActivityIndicator,
+} from "react-native";
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function ChooseScreen(){
+export default function ChooseScreen() {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
 
-    const router = useRouter()
+    useEffect(() => {
+        const run = async () => {
+            const isLogin = await AsyncStorage.getItem("isLogin");
+            console.log("AsyncStorage isLogin:", isLogin);
 
-    return(
+            if (isLogin === "student") {
+                router.replace("/student/home");
+            } else if (isLogin === "teacher") {
+                router.replace("/teacher/home");
+            } else {
+                setIsLoading(false); // Kein Login → zeige Auswahl
+            }
+        };
+
+        run();
+    }, []);
+
+    const handleLogin = async (role: "student" | "teacher") => {
+        await AsyncStorage.setItem("isLogin", role);
+        router.replace(`/${role}/home`);
+    };
+
+    if (isLoading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <ActivityIndicator size="large" color="#fff" />
+                <Text style={{ color: "#fff", marginTop: 20 }}>Lade...</Text>
+            </SafeAreaView>
+        );
+    }
+
+    return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.heading}>Splan</Text>
             <Text style={styles.text}>Choose your role</Text>
             <View style={styles.chooseRow}>
-                <TouchableOpacity style={styles.button} onPress={() => router.replace("/student/home")}>
+                <TouchableOpacity style={styles.button} onPress={() => handleLogin("student")}>
                     <Text style={styles.buText}>Student</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => router.replace("/teacher/home")}>
+                <TouchableOpacity style={styles.button} onPress={() => handleLogin("teacher")}>
                     <Text style={styles.buText}>Teacher</Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
-    )
+    );
 }
+
+
 
 const styles = StyleSheet.create({
     container: {

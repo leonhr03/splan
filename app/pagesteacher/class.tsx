@@ -1,57 +1,51 @@
-import {useRouter, useFocusEffect} from "expo-router"
-import React, {useState,useCallback} from "react"
-import {SafeAreaView, Text, StyleSheet, View, TouchableOpacity, FlatList, Modal, TextInput} from "react-native"
+import React, {useEffect, useState} from "react"
+import {FlatList, SafeAreaView, Text, TouchableOpacity, StyleSheet, View, Modal, TextInput} from "react-native";
+import {useLocalSearchParams} from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function Teacher(){
-
-    const router = useRouter()
-    const [classes, setClasses] = useState([])
-    const [newClass, setNewClass] = useState("")
-
+export default function ClassStudent() {
+    const {headingClass} = useLocalSearchParams()
     const [alertVisible, setAlertVisible] = useState(false)
-    const [addAlert, setAddAlert] = useState(false)
+    const [addStudentAlert, setAddStudentAlert] = useState(false)
+    const [newStudent, setNewStudent] = useState("")
+    const [students, setStudents] = useState([
+        {title: "max mustermann"},
+        {title: "Herbert Herrmann"},
+        {title: "Jacky Daniela"}
+    ])
 
-
-
-    useFocusEffect(
-        useCallback(() => {
-            const load = async () => {
-                const storedClasses = await AsyncStorage.getItem("classes");
-                setClasses(storedClasses ? JSON.parse(storedClasses) : []);
-            };
-            load();
-        }, [])
-    );
+    useEffect(() => {
+        const load = async()=> {
+            const storedClasses = await AsyncStorage.getItem(`${headingClass}/students`);
+            setStudents(storedClasses ? JSON.parse(storedClasses) : []);
+        }
+        load()
+    }, [])
 
     const save = async (array: any) => {
-        await AsyncStorage.setItem("classes", JSON.stringify(array));
-        const storedClasses = await AsyncStorage.getItem("classes");
-        setClasses(storedClasses ? JSON.parse(storedClasses) : []);
-    };
-
-    const addClass = async () => {
-        const trimmedClass = newClass.trim()
-
-        if(!trimmedClass) return;
-
-        const storedClasses = await AsyncStorage.getItem("classes")
-        const oldClasses = storedClasses ? JSON.parse(storedClasses) : [];
-
-        const newClasses: any = [...oldClasses, {title: trimmedClass}]
-        setClasses(newClasses)
-        await save(newClasses)
-        setAddAlert(false)
-        setNewClass("")
-        router.replace("/teacher/home")
+        const storedNewList = await AsyncStorage.setItem(`${headingClass}/students`, JSON.stringify(array) )
+        const storedClasses = await AsyncStorage.getItem(`${headingClass}/students`);
+        setStudents(storedClasses ? JSON.parse(storedClasses) : []);
     }
 
+    const addStudent = async () => {
+        const trimmed = newStudent.trim()
+        if(!trimmed) return;
+
+        const storedStudent = await AsyncStorage.getItem(`${headingClass}/students`)
+        const parsedStudent = storedStudent ? JSON.parse(storedStudent): [];
+
+        const newStudentList = [...parsedStudent, {title: trimmed}]
+        await save(newStudentList)
+        setNewStudent("")
+        setAddStudentAlert(false)
+    };
 
     const renderItem = ({ item, index }: any) => {
 
         return (
             <TouchableOpacity
-                onPress={() => router.replace(`/pagesteacher/class?headingClass=${encodeURIComponent(item.title)}`)}
+                onPress={() => setAlertVisible(true)}
             >
                 <View style={styles.item}>
                     <View style={styles.itemLeft}>
@@ -65,17 +59,16 @@ export default function Teacher(){
         );
     };
 
-
     return(
         <SafeAreaView style={styles.container}>
-            <Text style={styles.heading}>Splan for Teacher</Text>
+            <Text style={styles.heading}>{headingClass}</Text>
             <FlatList
-                data={classes}
+                data={students}
                 renderItem={renderItem}
                 keyExtractor={(_, index) => index.toString()}
             />
 
-            <TouchableOpacity style={styles.button} onPress={() => setAddAlert(true)}>
+            <TouchableOpacity style={styles.button} onPress={() => setAddStudentAlert(true)}>
                 <Text style={styles.buText}>Add</Text>
             </TouchableOpacity>
 
@@ -93,27 +86,26 @@ export default function Teacher(){
 
             </Modal>
 
-
-            <Modal transparent animationType="fade" visible={addAlert}>
+            <Modal transparent animationType="fade" visible={addStudentAlert}>
                 <View style={styles.alertOverlay}>
                     <View style={styles.alertContainer}>
                         <Text style={styles.alertHeading}>Add Class</Text>
                         <TextInput
                             style={styles.input}
-                            value={newClass}
-                            onChangeText={setNewClass}
+                            value={newStudent}
+                            onChangeText={setNewStudent}
                             placeholder={"class"}
                         />
                         <View style={styles.alertButtons}>
                             <TouchableOpacity
                                 style={[styles.alertButton, styles.alertButtonBorder]}
-                                onPress={() => setAddAlert(false)}
+                                onPress={() => setAddStudentAlert(false)}
                             >
                                 <Text style={styles.alertText}>Cancel</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.alertButton, styles.alertButtonBorder]}
-                                onPress={addClass}
+                                onPress={addStudent}
                             >
                                 <Text style={styles.alertText}>Add</Text>
                             </TouchableOpacity>
@@ -121,10 +113,7 @@ export default function Teacher(){
                     </View>
                 </View>
             </Modal>
-
         </SafeAreaView>
-
-
     )
 }
 
@@ -237,5 +226,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
         alignItems: "center",
     },
+
 
 })

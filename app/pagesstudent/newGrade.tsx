@@ -29,7 +29,7 @@ export default function NewGrade() {
         await save(newList);
         setExam("");
         setGrade("")
-        router.replace(`/student/grade?subject=${encodeURIComponent(subject as string)}`)
+        router.replace(`/pagesstudent/grade?subject=${encodeURIComponent(subject as string)}`)
     };
 
     return(
