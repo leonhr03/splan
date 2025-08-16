@@ -1,50 +1,46 @@
 import React, {useEffect, useState} from "react"
-import {FlatList, SafeAreaView, Text, TouchableOpacity, StyleSheet, View, Modal, TextInput} from "react-native";
-import {useLocalSearchParams, useRouter} from "expo-router";
+import {FlatList, Modal, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native"
+import {useLocalSearchParams} from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function ClassStudent() {
-    const router = useRouter()
-    const {headingClass} = useLocalSearchParams()
-    const [addStudentAlert, setAddStudentAlert] = useState(false)
-    const [newStudent, setNewStudent] = useState("")
-    const [students, setStudents] = useState([])
+export default function Student() {
+
+    const [subject, setSubject]  = useState([])
+    const [newSubject, setNewSubject] = useState("")
+    const {student} = useLocalSearchParams()
+    const [addSubjectAlert, setAddSubjectAlert] = useState(false)
 
     useEffect(() => {
         const load = async()=> {
-            const storedClasses = await AsyncStorage.getItem(`${headingClass}/students`);
-            setStudents(storedClasses ? JSON.parse(storedClasses) : []);
+            const storedClasses = await AsyncStorage.getItem(`${student}/subjects`);
+            setSubject(storedClasses ? JSON.parse(storedClasses) : []);
         }
         load()
     }, [])
 
     const save = async (array: any) => {
-        const storedNewList = await AsyncStorage.setItem(`${headingClass}/students`, JSON.stringify(array) )
-        const storedClasses = await AsyncStorage.getItem(`${headingClass}/students`);
-        setStudents(storedClasses ? JSON.parse(storedClasses) : []);
+        const storedNewList = await AsyncStorage.setItem(`${student}/subjects`, JSON.stringify(array) )
+        const storedClasses = await AsyncStorage.getItem(`${student}/subjects`);
+        setSubject(storedClasses ? JSON.parse(storedClasses) : []);
     }
 
     const addStudent = async () => {
-        const trimmed = newStudent.trim()
+        const trimmed = newSubject.trim()
         if(!trimmed) return;
 
-        const storedStudent = await AsyncStorage.getItem(`${headingClass}/students`)
+        const storedStudent = await AsyncStorage.getItem(`${student}/subjects`)
         const parsedStudent = storedStudent ? JSON.parse(storedStudent): [];
 
         const newStudentList = [...parsedStudent, {title: trimmed}]
         await save(newStudentList)
-        setNewStudent("")
-        setAddStudentAlert(false)
+        setNewSubject("")
+        setAddSubjectAlert(false)
     };
+
 
     const renderItem = ({ item, index }: any) => {
         return (
-            <TouchableOpacity
-                onPress={() => router.replace({
-                    pathname: "/pagesteacher/student" as any,
-                    params: { student: item.title },
-                })}
-            >
+            <TouchableOpacity>
                 <View style={styles.item}>
                     <View style={styles.itemLeft}>
                         <Text style={styles.text}>{item.title}</Text>
@@ -59,38 +55,31 @@ export default function ClassStudent() {
 
     return(
         <SafeAreaView style={styles.container}>
-            <Text style={styles.heading}>{headingClass}</Text>
+            <Text style={styles.heading}>{student}</Text>
             <FlatList
-                data={students}
+                data={subject}
                 renderItem={renderItem}
                 keyExtractor={(_, index) => index.toString()}
-            />
-
-            <TouchableOpacity style={styles.button} onPress={() => setAddStudentAlert(true)}>
+            >
+            </FlatList>
+            <TouchableOpacity style={styles.button} onPress={() => setAddSubjectAlert(true)}>
                 <Text style={styles.buText}>Add</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button} onPress={() => router.replace("/teacher/home")}>
-                <Text style={styles.buText}>Back</Text>
-            </TouchableOpacity>
-
-
-
-
-            <Modal transparent animationType="fade" visible={addStudentAlert}>
+            <Modal transparent animationType="fade" visible={addSubjectAlert}>
                 <View style={styles.alertOverlay}>
                     <View style={styles.alertContainer}>
                         <Text style={styles.alertHeading}>Add Student</Text>
                         <TextInput
                             style={styles.input}
-                            value={newStudent}
-                            onChangeText={setNewStudent}
+                            value={newSubject}
+                            onChangeText={setNewSubject}
                             placeholder={"Student Name"}
                         />
                         <View style={styles.alertButtons}>
                             <TouchableOpacity
                                 style={[styles.alertButton, styles.alertButtonBorder]}
-                                onPress={() => setAddStudentAlert(false)}
+                                onPress={() => setAddSubjectAlert(false)}
                             >
                                 <Text style={styles.alertText}>Cancel</Text>
                             </TouchableOpacity>
@@ -104,6 +93,7 @@ export default function ClassStudent() {
                     </View>
                 </View>
             </Modal>
+
         </SafeAreaView>
     )
 }
@@ -116,17 +106,14 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         padding: 16,
     },
+
     heading: {
-        fontSize: 30,
+        fontSize: 22,
         color: "#006400",
         marginTop: 20,
         marginBottom: 10,
     },
-    text: {
-        fontSize: 20,
-        marginHorizontal: 10,
-        color: "#fff",
-    },
+
     item: {
         flexDirection: "row",
         alignItems: "center",
@@ -151,16 +138,24 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
+
+    buText: {
+        fontSize: 20,
+        color: "#000",
+    },
+
+    text: {
+        fontSize: 20,
+        marginHorizontal: 10,
+        color: "#fff",
+    },
+
     button: {
         padding: 10,
         backgroundColor: "#006400",
         borderRadius: 15,
         marginTop: 20,
         marginBottom: 30,
-    },
-    buText: {
-        fontSize: 20,
-        color: "#000",
     },
 
     alertContainer: {
@@ -171,7 +166,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         padding: 16,
-        marginHorizontal: 20,
     },
 
     alertHeading: {
@@ -218,6 +212,5 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
         alignItems: "center",
     },
-
 
 })
